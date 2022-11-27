@@ -12,10 +12,22 @@ import (
 
 const path = "/ws/sessions/:id"
 
-var internalWSMap map[string]*websocket.Conn
+type wsserver struct {
+	sync.RWMutex
+	internalWSMap map[string]*websocket.Conn
+	ginEngine     *gin.Engine
+	upgrader      websocket.Upgrader
+}
 
-var (
-	upgrader = websocket.Upgrader{
+var wsserverInternal wsserver
+
+func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
+	wsserverInternal = wsserver{
+		RWMutex:       sync.RWMutex{},
+		internalWSMap: map[string]*websocket.Conn{},
+	}
+
+	wsserverInternal.upgrader = websocket.Upgrader{
 		HandshakeTimeout: time.Second * 3,
 		ReadBufferSize:   1024,
 		WriteBufferSize:  1024,
@@ -28,19 +40,17 @@ var (
 		},
 		EnableCompression: false,
 	}
+	wsserverInternal.ginEngine = gin.Default()
 
-	ginEngine *gin.Engine
-)
+	wsserverInternal.ginEngine.GET(path, wsserverInternal.getwshandler(webSocketChannel))
+	wsserverInternal.ginEngine.DELETE(path, wsserverInternal.delwshandler(webSocketChannel))
 
-func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
-	ginEngine = gin.Default()
-	ginEngine.GET(path, getwshandler(webSocketChannel))
-	ginEngine.DELETE(path, delwshandler(webSocketChannel))
-	ginEngine.Run()
+	wsserverInternal.ginEngine.Run()
+
 	wg.Done()
 }
 
-func delwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+func (w *wsserver) delwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -48,14 +58,17 @@ func delwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 		res := len(sessionID) > 0
 
 		if res {
-			onDelClient(sessionID)
+			res = w.isClientExist(sessionID)
+			if res {
+				w.onDelClient(sessionID)
+			}
 		}
 	}
 
 	return gin.HandlerFunc(fn)
 }
 
-func getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+func (w *wsserver) getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -68,13 +81,13 @@ func getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 		}
 
 		//upgrade get request to websocket protocol
-		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		ws, err := w.upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		onAddClient(sessionID, ws)
+		w.onAddClient(sessionID, ws)
 
 		webSocketChannel <- ws
 
@@ -84,18 +97,21 @@ func getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 
 }
 
-func onAddClient(id string, ws *websocket.Conn) {
-	internalWSMap[id] = ws
+func (w *wsserver) onAddClient(id string, ws *websocket.Conn) {
+	w.Lock()
+	defer w.Unlock()
+	w.internalWSMap[id] = ws
 }
 
-func onDelClient(id string) {
-	delete(internalWSMap, id)
+func (w *wsserver) onDelClient(id string) {
+	w.Lock()
+	defer w.Unlock()
+	delete(w.internalWSMap, id)
 }
 
-func isClientExist(id string) bool {
-	_, ok := internalWSMap[id]
-	if ok {
-		return true
-	}
-	return false
+func (w *wsserver) isClientExist(id string) bool {
+	w.Lock()
+	defer w.Unlock()
+	_, ok := w.internalWSMap[id]
+	return ok
 }
