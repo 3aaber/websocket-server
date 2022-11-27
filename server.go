@@ -10,7 +10,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const path = "/ws/sessions/:id"
+const (
+	path              = "/ws/sessions/:id"
+	handshakeTimeout  = 3
+	readBufferSize    = 1024
+	writeBufferSize   = 1024
+	EnableCompression = false
+)
 
 type wsserver struct {
 	sync.RWMutex
@@ -28,17 +34,19 @@ func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
 	}
 
 	wsserverInternal.upgrader = websocket.Upgrader{
-		HandshakeTimeout: time.Second * 3,
-		ReadBufferSize:   1024,
-		WriteBufferSize:  1024,
+		HandshakeTimeout: time.Second * handshakeTimeout,
+		ReadBufferSize:   readBufferSize,
+		WriteBufferSize:  writeBufferSize,
 		WriteBufferPool:  nil,
 		Subprotocols:     []string{},
 		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 		},
+
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
-		EnableCompression: false,
+
+		EnableCompression: EnableCompression,
 	}
 	wsserverInternal.ginEngine = gin.Default()
 
