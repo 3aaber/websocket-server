@@ -12,6 +12,8 @@ import (
 
 const path = "/ws/sessions/:id"
 
+var internalWSMap map[string]*websocket.Conn
+
 var (
 	upgrader = websocket.Upgrader{
 		HandshakeTimeout: time.Second * 3,
@@ -32,12 +34,28 @@ var (
 
 func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
 	ginEngine = gin.Default()
-	ginEngine.GET(path, wshandler(webSocketChannel))
+	ginEngine.GET(path, getwshandler(webSocketChannel))
+	ginEngine.DELETE(path, delwshandler(webSocketChannel))
 	ginEngine.Run()
 	wg.Done()
 }
 
-func wshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+func delwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+
+		sessionID := c.Param("id")
+
+		res := len(sessionID) > 0
+
+		if res {
+			onDelClient(sessionID)
+		}
+	}
+
+	return gin.HandlerFunc(fn)
+}
+
+func getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -56,10 +74,28 @@ func wshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
 			return
 		}
 
+		onAddClient(sessionID, ws)
+
 		webSocketChannel <- ws
 
 	}
 
 	return gin.HandlerFunc(fn)
 
+}
+
+func onAddClient(id string, ws *websocket.Conn) {
+	internalWSMap[id] = ws
+}
+
+func onDelClient(id string) {
+	delete(internalWSMap, id)
+}
+
+func isClientExist(id string) bool {
+	_, ok := internalWSMap[id]
+	if ok {
+		return true
+	}
+	return false
 }
