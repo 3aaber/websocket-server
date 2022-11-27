@@ -6,7 +6,7 @@
 
 [] Rate Limit
 
-[] Session Timeout
+[X] Session Timeout
 
 [] Single Session Validation
 
