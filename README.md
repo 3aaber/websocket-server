@@ -7,6 +7,10 @@
 - Have Timeout for established sessions
 - Detect Duplicate Sessions
 
+## How To Use
+
+`make`
+
 ## TODO
 
 [] Handler to check session id
