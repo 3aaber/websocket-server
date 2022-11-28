@@ -15,13 +15,13 @@ func GetWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {
 	return wsserverInternal.getWebSocketSession(sessionID)
 }
 
-func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
+func InitWebSocket(wg *sync.WaitGroup) {
 	wsserverInternal = wsserver{
 		RWMutex:       sync.RWMutex{},
 		internalWSMap: map[string]*websocket.Conn{},
 	}
 
-	wsserverInternal.wsmapTTL = sortedmap.New(4, asc.Time)
+	wsserverInternal.wsmapTTL = sortedmap.New(1, asc.Time)
 
 	wsserverInternal.upgrader = websocket.Upgrader{
 		HandshakeTimeout: time.Second * handshakeTimeout,
@@ -40,8 +40,8 @@ func InitWebSocket(webSocketChannel chan *websocket.Conn, wg *sync.WaitGroup) {
 	}
 	wsserverInternal.ginEngine = gin.Default()
 
-	wsserverInternal.ginEngine.GET(path, wsserverInternal.getwshandler(webSocketChannel))
-	wsserverInternal.ginEngine.DELETE(path, wsserverInternal.delwshandler(webSocketChannel))
+	wsserverInternal.ginEngine.GET(path, wsserverInternal.getwshandler())
+	wsserverInternal.ginEngine.DELETE(path, wsserverInternal.delwshandler())
 
 	wsserverInternal.ginEngine.Run()
 

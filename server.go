@@ -30,7 +30,7 @@ type wsserver struct {
 
 var wsserverInternal wsserver
 
-func (w *wsserver) delwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+func (w *wsserver) delwshandler() gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -48,7 +48,7 @@ func (w *wsserver) delwshandler(webSocketChannel chan *websocket.Conn) gin.Handl
 	return gin.HandlerFunc(fn)
 }
 
-func (w *wsserver) getwshandler(webSocketChannel chan *websocket.Conn) gin.HandlerFunc {
+func (w *wsserver) getwshandler() gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -74,8 +74,6 @@ func (w *wsserver) getwshandler(webSocketChannel chan *websocket.Conn) gin.Handl
 		}
 
 		w.onAddClient(sessionID, ws)
-
-		webSocketChannel <- ws
 
 	}
 

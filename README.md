@@ -19,6 +19,6 @@
 
 [X] Session Timeout
 
-[] Single Session Validation
+[X] Single Session Validation
 
-[] Detect Duplicate Sessions
+[X] Detect Duplicate Sessions
