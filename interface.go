@@ -11,7 +11,7 @@ import (
 	"github.com/umpc/go-sortedmap/asc"
 )
 
-func InitWebSocket(wg *sync.WaitGroup) {
+func InitWebSocket(h func(string) bool) {
 	wsserverInternal = wsserver{
 		RWMutex:       sync.RWMutex{},
 		internalWSMap: map[string]*websocket.Conn{},
@@ -36,14 +36,13 @@ func InitWebSocket(wg *sync.WaitGroup) {
 	}
 	wsserverInternal.ginEngine = gin.Default()
 
-	wsserverInternal.ginEngine.GET(path, wsserverInternal.getwshandler())
-	wsserverInternal.ginEngine.DELETE(path, wsserverInternal.delwshandler())
+	wsserverInternal.ginEngine.GET(path, wsserverInternal.getwshandler(h))
+	wsserverInternal.ginEngine.DELETE(path, wsserverInternal.delwshandler(h))
 
 	wsserverInternal.ginEngine.Run()
 
 	wsserverInternal.checkTTLofRecords()
 
-	wg.Done()
 }
 
 func GetWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {

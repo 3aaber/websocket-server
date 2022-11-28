@@ -30,13 +30,16 @@ type wsserver struct {
 
 var wsserverInternal wsserver
 
-func (w *wsserver) delwshandler() gin.HandlerFunc {
+func (w *wsserver) delwshandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
 
-		res := len(sessionID) > 0
+		res := false
 
+		if len(sessionID) > 0 && handler != nil {
+			res = handler(sessionID)
+		}
 		if res {
 			res = w.isClientExist(sessionID)
 			if res {
@@ -48,12 +51,16 @@ func (w *wsserver) delwshandler() gin.HandlerFunc {
 	return gin.HandlerFunc(fn)
 }
 
-func (w *wsserver) getwshandler() gin.HandlerFunc {
+func (w *wsserver) getwshandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
 
-		res := len(sessionID) > 0
+		res := false
+
+		if len(sessionID) > 0 && handler != nil {
+			res = handler(sessionID)
+		}
 
 		// check if the sessionID dont authorized , we return 401 status code
 		if !res {

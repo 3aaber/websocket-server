@@ -13,12 +13,12 @@
 
 ## TODO
 
-[] Handler to check session id
+- [x] Handler to check session id
 
-[] Rate Limit
+- [ ] Rate Limit
 
-[X] Session Timeout
+- [x] Session Timeout
 
-[X] Single Session Validation
+- [x] Single Session Validation
 
-[X] Detect Duplicate Sessions
+- [x] Detect Duplicate Sessions
