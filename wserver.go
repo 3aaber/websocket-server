@@ -17,7 +17,7 @@ const (
 	readBufferSize    = 1024
 	writeBufferSize   = 1024
 	EnableCompression = false
-	TTLTime           = time.Hour * 1
+	ttlTime           = time.Hour * 1
 )
 
 type wsserver struct {
@@ -40,7 +40,7 @@ func (w *wsserver) delwshandler() gin.HandlerFunc {
 		if res {
 			res = w.isClientExist(sessionID)
 			if res {
-				w.onDelClient(sessionID)
+				w.deleteClient(sessionID)
 			}
 		}
 	}
@@ -73,7 +73,7 @@ func (w *wsserver) getwshandler() gin.HandlerFunc {
 			return
 		}
 
-		w.onAddClient(sessionID, ws)
+		w.addClient(sessionID, ws)
 
 	}
 
@@ -81,14 +81,20 @@ func (w *wsserver) getwshandler() gin.HandlerFunc {
 
 }
 
-func (w *wsserver) onAddClient(id string, ws *websocket.Conn) {
+func (w *wsserver) len() int {
 	w.Lock()
 	defer w.Unlock()
-	w.wsmapTTL.Insert(id, time.Now().Add(TTLTime))
+	return len(w.internalWSMap)
+}
+
+func (w *wsserver) addClient(id string, ws *websocket.Conn) {
+	w.Lock()
+	defer w.Unlock()
+	w.wsmapTTL.Insert(id, time.Now().Add(ttlTime))
 	w.internalWSMap[id] = ws
 }
 
-func (w *wsserver) onDelClient(id string) {
+func (w *wsserver) deleteClient(id string) {
 	w.Lock()
 	defer w.Unlock()
 	w.wsmapTTL.Delete(id)
