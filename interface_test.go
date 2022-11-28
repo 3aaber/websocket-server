@@ -20,7 +20,7 @@ func TestInitWebSocketServer(t *testing.T) {
 
 	u := url.URL{
 		Scheme: "ws",
-		Host:   *addr,
+		Host:   "localhost:8080",
 		Path:   "/ws/sessions/1234",
 	}
 	log.Printf("connecting to %s", u.String())
