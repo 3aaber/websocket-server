@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	path              = "/ws/sessions/:id"
+	defaultPath       = "/ws/sessions/:id"
 	handshakeTimeout  = 3
 	readBufferSize    = 1024
 	writeBufferSize   = 1024
