@@ -12,9 +12,11 @@ import (
 )
 
 func InitWebSocket(h func(string) bool) {
-	wsserverInternal = wsserver{
-		RWMutex:       sync.RWMutex{},
-		internalWSMap: map[string]*websocket.Conn{},
+	if wsserverInternal == nil {
+		wsserverInternal = &wsserver{
+			RWMutex:       sync.RWMutex{},
+			internalWSMap: map[string]*websocket.Conn{},
+		}
 	}
 
 	wsserverInternal.wsmapTTL = sortedmap.New(1, asc.Time)

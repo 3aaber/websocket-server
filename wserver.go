@@ -28,7 +28,7 @@ type wsserver struct {
 	upgrader      websocket.Upgrader         // websocket upgrader
 }
 
-var wsserverInternal wsserver
+var wsserverInternal *wsserver
 
 func (w *wsserver) delwshandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
