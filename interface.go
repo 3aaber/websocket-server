@@ -36,7 +36,9 @@ func InitWebSocket(h func(string) bool, addr string) {
 
 		EnableCompression: EnableCompression,
 	}
-	wsserverInternal.ginEngine = gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+
+	wsserverInternal.ginEngine = gin.New()
 
 	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(h))
 	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(h))

@@ -41,7 +41,7 @@ func TestInitWebSocketServer(t *testing.T) {
 	}
 }
 
-func TestCallWServerInLoop(t *testing.T) {
+func BenchmarkCallWServerInLoop(b *testing.B) {
 	Host := "localhost:8080"
 
 	baseURL := "/ws/sessions/"
@@ -52,7 +52,9 @@ func TestCallWServerInLoop(t *testing.T) {
 	}
 	InitWebSocket(handler, Host)
 
-	for i := 0; i < 1000; i++ {
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
 		id := uuid.New()
 		u.Path = baseURL + id.String()
 
@@ -62,13 +64,9 @@ func TestCallWServerInLoop(t *testing.T) {
 		}
 		defer c.Close()
 
-		if n := NoOfWebSocketClients(); n != i+1 {
-			t.Errorf("wrong number of clients, expect one, recieved : %d", n)
-		}
-
 		ok, _ := GetWebSocketSession(id.String())
 		if !ok {
-			t.Error("error in get web socket session ")
+			b.Error("error in get web socket session ")
 		}
 	}
 
