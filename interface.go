@@ -77,3 +77,15 @@ func SendMessage(sessionID string, message []byte) error {
 	}
 	return nil
 }
+
+func CloseSession(sessionID string) error {
+	ok, ws := wsserverInternal.getWebSocketSession(sessionID)
+	if !ok {
+		return fmt.Errorf("error in session key : %s, no assosiated web socekt session exist", sessionID)
+	}
+	err := ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		return fmt.Errorf("error in close session : %s, error %s", sessionID, err.Error())
+	}
+	return nil
+}
