@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,8 +14,6 @@ func handler(id string) bool {
 
 func TestInitWebSocketServer(t *testing.T) {
 	InitWebSocket(handler)
-
-	time.Sleep(1 * time.Second)
 
 	u := url.URL{
 		Scheme: "ws",
@@ -39,4 +36,8 @@ func TestInitWebSocketServer(t *testing.T) {
 	if !ok {
 		t.Error("error in get web socket session ")
 	}
+}
+
+func TestCallWServerInLoop(t *testing.T) {
+
 }

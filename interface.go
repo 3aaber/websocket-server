@@ -40,8 +40,16 @@ func InitWebSocket(h func(string) bool) {
 
 	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(h))
 	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(h))
+	wg := &sync.WaitGroup{}
 
-	go wsserverInternal.ginEngine.Run()
+	// Wait for gin server to initialize and run in background
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		wg.Done()
+		wsserverInternal.ginEngine.Run()
+
+	}(wg)
+	wg.Wait()
 
 	wsserverInternal.checkTTLofRecords()
 
