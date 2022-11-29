@@ -11,7 +11,7 @@ import (
 	"github.com/umpc/go-sortedmap/asc"
 )
 
-func InitWebSocket(h func(string) bool) {
+func InitWebSocket(h func(string) bool, addr string) {
 	if wsserverInternal == nil {
 		wsserverInternal = &wsserver{
 			RWMutex:       sync.RWMutex{},
@@ -44,11 +44,11 @@ func InitWebSocket(h func(string) bool) {
 
 	// Wait for gin server to initialize and run in background
 	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
+	go func(wg *sync.WaitGroup, addr string) {
 		wg.Done()
-		wsserverInternal.ginEngine.Run()
+		wsserverInternal.ginEngine.Run(addr)
 
-	}(wg)
+	}(wg, addr)
 	wg.Wait()
 
 	wsserverInternal.checkTTLofRecords()
