@@ -8,10 +8,10 @@ import (
 func (w *wsserver) checkTTLofRecords() {
 	reversed := true
 	lowerBound := time.Date(1994, 1, 1, 0, 0, 0, 0, time.UTC)
-
+	checkTimeOfSessions := time.Second * 10 // routine time
 	wg := &sync.WaitGroup{}
 
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(checkTimeOfSessions)
 	defer ticker.Stop()
 	wg.Add(1)
 

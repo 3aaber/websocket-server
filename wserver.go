@@ -79,13 +79,9 @@ func (w *wsserver) getwshandler(handler func(string) bool) gin.HandlerFunc {
 			fmt.Println(err)
 			return
 		}
-
 		w.addClient(sessionID, ws)
-
 	}
-
 	return gin.HandlerFunc(fn)
-
 }
 
 func (w *wsserver) len() int {
