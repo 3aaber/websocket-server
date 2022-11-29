@@ -40,7 +40,56 @@ func TestInitWebSocketServer(t *testing.T) {
 		t.Error("error in get web socket session ")
 	}
 }
+func TestSendRecieve(t *testing.T) {
 
+	sampleText := "This is Test"
+	Host := "localhost:8080"
+
+	baseURL := "/ws/sessions/"
+	u := url.URL{
+		Scheme: "ws",
+		Host:   Host,
+		Path:   baseURL,
+	}
+	InitWebSocket(handler, Host)
+
+	id := uuid.New()
+	u.Path = baseURL + id.String()
+
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	ok, wsession := GetWebSocketSession(id.String())
+	if !ok {
+		t.Error("problem in get web socket sessions")
+		return
+	}
+
+	err = wsession.WriteMessage(1, []byte(sampleText))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, message, err := c.ReadMessage()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if string(message) != sampleText {
+		t.Errorf("recieved message differ from sent one : recieved :%s, sent: %s", string(message), sampleText)
+		return
+	}
+
+	err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		log.Println("write close:", err)
+		return
+	}
+}
 func BenchmarkCallWServerInLoop(b *testing.B) {
 	Host := "localhost:8080"
 

@@ -42,9 +42,9 @@ func InitWebSocket(h func(string) bool, addr string) {
 
 	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(h))
 	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(h))
-	wg := &sync.WaitGroup{}
 
 	// Wait for gin server to initialize and run in background
+	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, addr string) {
 		wg.Done()
