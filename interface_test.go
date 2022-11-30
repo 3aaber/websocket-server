@@ -1,8 +1,11 @@
 package ws
 
 import (
+	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -121,5 +124,72 @@ func BenchmarkCallWServerInLoop(b *testing.B) {
 			b.Error("error in get web socket session ")
 		}
 	}
+
+}
+
+func BenchmarkSendRecieveMessageOverWebsocket(b *testing.B) {
+
+	id := uuid.New().String()
+	port := rand.Intn(65535)
+
+	setupServer(port, id)
+	c := callServer(port, id)
+
+	recieveSocket(c)
+
+	message := []byte("Test Message")
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+
+		err := SendMessage(id, message)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+	c.Close()
+}
+
+func setupServer(port int, id string) {
+	Host := "localhost:" + fmt.Sprint(port)
+	InitWebSocket(handler, Host)
+}
+
+func callServer(port int, id string) (c *websocket.Conn) {
+
+	Host := "localhost:" + fmt.Sprint(port)
+	baseURL := "/ws/sessions/"
+	u := url.URL{
+		Scheme: "ws",
+		Host:   Host,
+		Path:   baseURL,
+	}
+	u.Path = baseURL + id
+
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	return c
+}
+
+func recieveSocket(c *websocket.Conn) {
+
+	done := make(chan struct{})
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		defer close(done)
+		wg.Done()
+		for {
+			_, _, err := c.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}(wg)
+	wg.Wait()
 
 }
