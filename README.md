@@ -27,7 +27,6 @@ Using [gin-gonic](https://github.com/gin-gonic/gin) and [gorilla](https://github
 
 - [ ] Add the client information to session, client IP, true client IP(x-real-ip)
 
-
 ## References
 
 - [gin-gonic](https://github.com/gin-gonic/gin)
