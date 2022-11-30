@@ -42,7 +42,7 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 	initialOnce.Do(func() {
 		wsserverInternal = &wsserver{
 			RWMutex:       sync.RWMutex{},
-			internalWSMap: sync.Map{}, //map[string]*websocket.Conn{},
+			internalWSMap: sync.Map{},
 		}
 	})
 
@@ -63,6 +63,7 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 
 		EnableCompression: EnableCompression,
 	}
+
 	gin.SetMode(gin.ReleaseMode)
 
 	wsserverInternal.ginEngine = gin.New()
@@ -70,7 +71,7 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getWebSocketHandler(handler))
 	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.deleteWebSocketHandler(handler))
 
-	srv := &http.Server{
+	wsserverInternal.webServer = &http.Server{
 		Addr:    addr,
 		Handler: wsserverInternal.ginEngine,
 	}
@@ -80,7 +81,7 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, addr string) {
 		wg.Done()
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := wsserverInternal.webServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen failed, address : %s, error : %s\n", addr, err.Error())
 		}
 
