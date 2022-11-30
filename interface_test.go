@@ -96,6 +96,7 @@ func TestSendRecieve(t *testing.T) {
 		return
 	}
 }
+
 func BenchmarkCallWServerInLoop(b *testing.B) {
 	Host := "localhost:8080"
 

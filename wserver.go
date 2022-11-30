@@ -15,12 +15,12 @@ import (
 )
 
 const (
-	defaultPath       = "/ws/sessions/:id"
-	handshakeTimeout  = 3
-	readBufferSize    = 1024
-	writeBufferSize   = 1024
-	EnableCompression = false
-	ttlTime           = time.Hour * 1
+	defaultPath       = "/ws/sessions/:id" // Default path for session id
+	handshakeTimeout  = 3                  // Handshake timeout (Second)
+	readBufferSize    = 1024               // Read Buffer Size in Byte
+	writeBufferSize   = 1024               // Write Buffer Size in Byte
+	EnableCompression = false              // Enable Compression
+	ttlTime           = time.Hour * 1      // TTL for each session
 )
 
 type wsserver struct {
@@ -193,7 +193,7 @@ func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket
 	if ok && returnVal != nil {
 		return ok, returnVal.(*websocket.Conn)
 	}
-	return ok, nil
+	return false, nil
 }
 
 // shutdown shutdown webserver
