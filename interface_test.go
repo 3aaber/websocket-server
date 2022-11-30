@@ -14,7 +14,7 @@ func handler(id string) bool {
 }
 
 func TestInitWebSocketServer(t *testing.T) {
-	Host := "localhost:8080"
+	Host := "localhost:8081"
 
 	u := url.URL{
 		Scheme: "ws",
@@ -24,6 +24,9 @@ func TestInitWebSocketServer(t *testing.T) {
 	InitWebSocket(handler, Host)
 
 	log.Printf("connecting to %s", u.String())
+
+	id := uuid.New()
+	u.Path = u.Path + id.String()
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -35,7 +38,7 @@ func TestInitWebSocketServer(t *testing.T) {
 		t.Errorf("wrong number of clients, expect one, recieved : %d", n)
 	}
 
-	ok, _ := GetWebSocketSession("1234")
+	ok, _ := GetWebSocketSession(id.String())
 	if !ok {
 		t.Error("error in get web socket session ")
 	}

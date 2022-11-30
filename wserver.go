@@ -169,5 +169,8 @@ func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket
 	w.RLock()
 	defer w.RUnlock()
 	returnVal, ok := w.internalWSMap.Load(sessionID)
-	return ok, returnVal.(*websocket.Conn)
+	if ok && returnVal != nil {
+		return ok, returnVal.(*websocket.Conn)
+	}
+	return ok, nil
 }
