@@ -3,7 +3,7 @@
 ## Features
 
 - Keep Track of sessions
-- Check Session Ids sent from user to validate 
+- Check Session Ids sent from user to validate
 - Have Timeout for established sessions
 - Detect Duplicate Sessions
 

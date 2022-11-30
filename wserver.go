@@ -102,6 +102,7 @@ func (w *wsserver) deleteWebSocketHandler(handler func(string) bool) gin.Handler
 		if len(sessionID) > 0 && handler != nil {
 			res = handler(sessionID)
 		}
+
 		if res {
 			res = w.isClientExist(sessionID)
 			if res {
@@ -143,7 +144,9 @@ func (w *wsserver) getWebSocketHandler(handler func(string) bool) gin.HandlerFun
 			fmt.Println(err)
 			return
 		}
+
 		w.addClient(sessionID, ws)
+
 	}
 	return gin.HandlerFunc(fn)
 }
@@ -161,32 +164,31 @@ func (w *wsserver) len() int {
 
 // addClient add client to list
 func (w *wsserver) addClient(id string, ws *websocket.Conn) {
+	w.internalWSMap.Store(id, ws)
+
 	w.Lock()
 	defer w.Unlock()
 	w.webSocketMapTTL.Insert(id, time.Now().Add(ttlTime))
-	w.internalWSMap.Store(id, ws)
+
 }
 
 // deleteClient delete client
 func (w *wsserver) deleteClient(id string) {
+	w.internalWSMap.Delete(id)
+
 	w.Lock()
 	defer w.Unlock()
 	w.webSocketMapTTL.Delete(id)
-	w.internalWSMap.Delete(id)
 }
 
 // isClientExist is client exist
 func (w *wsserver) isClientExist(id string) bool {
-	w.Lock()
-	defer w.Unlock()
 	_, ok := w.internalWSMap.Load(id)
 	return ok
 }
 
 // getWebSocketSession get web socket session for a session id
 func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {
-	w.RLock()
-	defer w.RUnlock()
 	returnVal, ok := w.internalWSMap.Load(sessionID)
 	if ok && returnVal != nil {
 		return ok, returnVal.(*websocket.Conn)
