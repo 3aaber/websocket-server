@@ -76,6 +76,7 @@ func (w *wsserver) getwshandler(handler func(string) bool) gin.HandlerFunc {
 		//upgrade get request to websocket protocol
 		ws, err := w.upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
 			fmt.Println(err)
 			return
 		}

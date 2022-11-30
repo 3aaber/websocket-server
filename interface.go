@@ -12,7 +12,13 @@ import (
 	"github.com/umpc/go-sortedmap/asc"
 )
 
-func InitWebSocket(h func(string) bool, addr string) {
+// InitWebSocket initialize the web socket server
+//
+// Input:
+//
+//	handler: the handler to verify the session id
+//	addr : the server address
+func InitWebSocket(handler func(string) bool, addr string) {
 	if wsserverInternal == nil {
 		wsserverInternal = &wsserver{
 			RWMutex:       sync.RWMutex{},
@@ -41,8 +47,8 @@ func InitWebSocket(h func(string) bool, addr string) {
 
 	wsserverInternal.ginEngine = gin.New()
 
-	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(h))
-	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(h))
+	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(handler))
+	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(handler))
 
 	// Wait for gin server to initialize and run in background
 	wg := &sync.WaitGroup{}
@@ -58,14 +64,33 @@ func InitWebSocket(h func(string) bool, addr string) {
 
 }
 
+// GetWebSocketSession get the web socket session for  session id
+//
+// Input:
+// sessionID : the client web socket session id
+//
+// Output:
+// ok : the session related to id exist
+// ws : the web socket session
 func GetWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {
 	return wsserverInternal.getWebSocketSession(sessionID)
 }
 
+// NoOfWebSocketClients return the number of clients
+// Output:
+// Number of clients
 func NoOfWebSocketClients() int {
 	return wsserverInternal.len()
 }
 
+// SendMessage send message to websocket session related to sessionID
+//
+// Input:
+// sessionID : session id
+// message: message to write to session
+//
+// Output:
+// error
 func SendMessage(sessionID string, message []byte) error {
 	ok, ws := wsserverInternal.getWebSocketSession(sessionID)
 	if !ok {
@@ -78,6 +103,13 @@ func SendMessage(sessionID string, message []byte) error {
 	return nil
 }
 
+// CloseSession close the session related to ID
+//
+// Input:
+// sessionID : web socket session id
+//
+// Output:
+// error
 func CloseSession(sessionID string) error {
 	ok, ws := wsserverInternal.getWebSocketSession(sessionID)
 	if !ok {
