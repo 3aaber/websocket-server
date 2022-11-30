@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"flag"
 	"log"
 	"net/url"
 	"testing"
@@ -10,21 +9,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
-
-// func runGin() {
-// 	r := gin.Default()
-// 	r.GET("/instant-logs/ws/sessions/:id", wshandler)
-
-// 	r.Run()
-// }
-
 func TestWebSocket(t *testing.T) {
-	// go runGin()
 
 	u := url.URL{
 		Scheme: "ws",
-		Host:   *addr,
+		Host:   "localhost:8080",
 		Path:   "/ws/sessions/1234",
 	}
 	log.Printf("connecting to %s", u.String())

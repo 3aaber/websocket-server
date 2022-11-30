@@ -73,3 +73,8 @@ func CloseSession(sessionID string) error {
 	}
 	return nil
 }
+
+// ShutDownServer shutdown web server
+func ShutDownServer() {
+	wsserverInternal.shutdown()
+}

@@ -1,7 +1,9 @@
 package ws
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -25,7 +27,8 @@ type wsserver struct {
 	sync.RWMutex                         // Lock for internal map
 	internalWSMap   sync.Map             //map[string]*websocket.Conn // internal map : session id -> web socket instance
 	webSocketMapTTL *sortedmap.SortedMap // sorted Map to save TTL data
-	webServer       *gin.Engine          // gin engine
+	ginEngine       *gin.Engine          // gin engine
+	webServer       *http.Server         // Web Server
 	upgrader        websocket.Upgrader   // websocket upgrader
 }
 
@@ -62,23 +65,32 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 	}
 	gin.SetMode(gin.ReleaseMode)
 
-	wsserverInternal.webServer = gin.New()
+	wsserverInternal.ginEngine = gin.New()
 
-	wsserverInternal.webServer.GET(defaultPath, wsserverInternal.getWebSocketHandler(handler))
-	wsserverInternal.webServer.DELETE(defaultPath, wsserverInternal.deleteWebSocketHandler(handler))
+	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getWebSocketHandler(handler))
+	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.deleteWebSocketHandler(handler))
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: wsserverInternal.ginEngine,
+	}
 
 	// Wait for gin server to initialize and run in background
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, addr string) {
 		wg.Done()
-		wsserverInternal.webServer.Run(addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen failed, address : %s, error : %s\n", addr, err.Error())
+		}
 
 	}(wg, addr)
 	wg.Wait()
 
 	wsserverInternal.checkTTLofRecords()
 }
+
+// deleteWebSocketHandler delete websocker handler
 func (w *wsserver) deleteWebSocketHandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
@@ -100,6 +112,7 @@ func (w *wsserver) deleteWebSocketHandler(handler func(string) bool) gin.Handler
 	return gin.HandlerFunc(fn)
 }
 
+// getWebSocketHandler get websocket handler
 func (w *wsserver) getWebSocketHandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
@@ -134,6 +147,7 @@ func (w *wsserver) getWebSocketHandler(handler func(string) bool) gin.HandlerFun
 	return gin.HandlerFunc(fn)
 }
 
+// len
 func (w *wsserver) len() int {
 	var i int
 	w.internalWSMap.Range(func(k, v interface{}) bool {
@@ -144,6 +158,7 @@ func (w *wsserver) len() int {
 
 }
 
+// addClient add client to list
 func (w *wsserver) addClient(id string, ws *websocket.Conn) {
 	w.Lock()
 	defer w.Unlock()
@@ -151,6 +166,7 @@ func (w *wsserver) addClient(id string, ws *websocket.Conn) {
 	w.internalWSMap.Store(id, ws)
 }
 
+// deleteClient delete client
 func (w *wsserver) deleteClient(id string) {
 	w.Lock()
 	defer w.Unlock()
@@ -158,6 +174,7 @@ func (w *wsserver) deleteClient(id string) {
 	w.internalWSMap.Delete(id)
 }
 
+// isClientExist is client exist
 func (w *wsserver) isClientExist(id string) bool {
 	w.Lock()
 	defer w.Unlock()
@@ -165,6 +182,7 @@ func (w *wsserver) isClientExist(id string) bool {
 	return ok
 }
 
+// getWebSocketSession get web socket session for a session id
 func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {
 	w.RLock()
 	defer w.RUnlock()
@@ -173,4 +191,16 @@ func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket
 		return ok, returnVal.(*websocket.Conn)
 	}
 	return ok, nil
+}
+
+// shutdown shutdown webserver
+func (w *wsserver) shutdown() {
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := w.webServer.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown: ", err)
+	}
+
 }
