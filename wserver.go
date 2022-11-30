@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/umpc/go-sortedmap"
+	"github.com/umpc/go-sortedmap/asc"
 )
 
 const (
@@ -28,8 +29,56 @@ type wsserver struct {
 	upgrader        websocket.Upgrader         // websocket upgrader
 }
 
-var wsserverInternal *wsserver
+var (
+	wsserverInternal *wsserver
+	initialOnce      sync.Once
+)
 
+func initializeWebSocketServer(handler func(string) bool, addr string) {
+
+	initialOnce.Do(func() {
+		wsserverInternal = &wsserver{
+			RWMutex:       sync.RWMutex{},
+			internalWSMap: map[string]*websocket.Conn{},
+		}
+	})
+
+	wsserverInternal.webSocketMapTTL = sortedmap.New(1, asc.Time)
+
+	wsserverInternal.upgrader = websocket.Upgrader{
+		HandshakeTimeout: time.Second * handshakeTimeout,
+		ReadBufferSize:   readBufferSize,
+		WriteBufferSize:  writeBufferSize,
+		WriteBufferPool:  nil,
+		Subprotocols:     []string{},
+		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+		},
+
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+
+		EnableCompression: EnableCompression,
+	}
+	gin.SetMode(gin.ReleaseMode)
+
+	wsserverInternal.webServer = gin.New()
+
+	wsserverInternal.webServer.GET(defaultPath, wsserverInternal.getWebSocketHandler(handler))
+	wsserverInternal.webServer.DELETE(defaultPath, wsserverInternal.deleteWebSocketHandler(handler))
+
+	// Wait for gin server to initialize and run in background
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup, addr string) {
+		wg.Done()
+		wsserverInternal.webServer.Run(addr)
+
+	}(wg, addr)
+	wg.Wait()
+
+	wsserverInternal.checkTTLofRecords()
+}
 func (w *wsserver) deleteWebSocketHandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
