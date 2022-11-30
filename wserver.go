@@ -22,11 +22,11 @@ const (
 )
 
 type wsserver struct {
-	sync.RWMutex                               // Lock for internal map
-	internalWSMap   map[string]*websocket.Conn // internal map : session id -> web socket instance
-	webSocketMapTTL *sortedmap.SortedMap       // sorted Map to save TTL data
-	webServer       *gin.Engine                // gin engine
-	upgrader        websocket.Upgrader         // websocket upgrader
+	sync.RWMutex                         // Lock for internal map
+	internalWSMap   sync.Map             //map[string]*websocket.Conn // internal map : session id -> web socket instance
+	webSocketMapTTL *sortedmap.SortedMap // sorted Map to save TTL data
+	webServer       *gin.Engine          // gin engine
+	upgrader        websocket.Upgrader   // websocket upgrader
 }
 
 var (
@@ -39,7 +39,7 @@ func initializeWebSocketServer(handler func(string) bool, addr string) {
 	initialOnce.Do(func() {
 		wsserverInternal = &wsserver{
 			RWMutex:       sync.RWMutex{},
-			internalWSMap: map[string]*websocket.Conn{},
+			internalWSMap: sync.Map{}, //map[string]*websocket.Conn{},
 		}
 	})
 
@@ -135,35 +135,39 @@ func (w *wsserver) getWebSocketHandler(handler func(string) bool) gin.HandlerFun
 }
 
 func (w *wsserver) len() int {
-	w.Lock()
-	defer w.Unlock()
-	return len(w.internalWSMap)
+	var i int
+	w.internalWSMap.Range(func(k, v interface{}) bool {
+		i++
+		return true
+	})
+	return i
+
 }
 
 func (w *wsserver) addClient(id string, ws *websocket.Conn) {
 	w.Lock()
 	defer w.Unlock()
 	w.webSocketMapTTL.Insert(id, time.Now().Add(ttlTime))
-	w.internalWSMap[id] = ws
+	w.internalWSMap.Store(id, ws)
 }
 
 func (w *wsserver) deleteClient(id string) {
 	w.Lock()
 	defer w.Unlock()
 	w.webSocketMapTTL.Delete(id)
-	delete(w.internalWSMap, id)
+	w.internalWSMap.Delete(id)
 }
 
 func (w *wsserver) isClientExist(id string) bool {
 	w.Lock()
 	defer w.Unlock()
-	_, ok := w.internalWSMap[id]
+	_, ok := w.internalWSMap.Load(id)
 	return ok
 }
 
 func (w *wsserver) getWebSocketSession(sessionID string) (ok bool, ws *websocket.Conn) {
 	w.RLock()
 	defer w.RUnlock()
-	ws, ok = w.internalWSMap[sessionID]
-	return ok, ws
+	returnVal, ok := w.internalWSMap.Load(sessionID)
+	return ok, returnVal.(*websocket.Conn)
 }
