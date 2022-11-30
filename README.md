@@ -1,5 +1,7 @@
 # WebSocket Server With Session Key
 
+Using [gin-gonic](https://github.com/gin-gonic/gin) and [gorilla](https://github.com/gorilla) to create websocket server
+
 ## Features
 
 - Keep Track of sessions
@@ -24,3 +26,9 @@
 - [x] Detect Duplicate Sessions
 
 - [ ] Add the client information to session, client IP, true client IP(x-real-ip)
+
+
+## References
+
+- [gin-gonic](https://github.com/gin-gonic/gin)
+- [gorilla](https://github.com/gorilla)
