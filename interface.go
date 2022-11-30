@@ -26,7 +26,7 @@ func InitWebSocket(handler func(string) bool, addr string) {
 		}
 	}
 
-	wsserverInternal.wsmapTTL = sortedmap.New(1, asc.Time)
+	wsserverInternal.webSocketMapTTL = sortedmap.New(1, asc.Time)
 
 	wsserverInternal.upgrader = websocket.Upgrader{
 		HandshakeTimeout: time.Second * handshakeTimeout,
@@ -45,17 +45,17 @@ func InitWebSocket(handler func(string) bool, addr string) {
 	}
 	gin.SetMode(gin.ReleaseMode)
 
-	wsserverInternal.ginEngine = gin.New()
+	wsserverInternal.webServer = gin.New()
 
-	wsserverInternal.ginEngine.GET(defaultPath, wsserverInternal.getwshandler(handler))
-	wsserverInternal.ginEngine.DELETE(defaultPath, wsserverInternal.delwshandler(handler))
+	wsserverInternal.webServer.GET(defaultPath, wsserverInternal.getWebSocketHandler(handler))
+	wsserverInternal.webServer.DELETE(defaultPath, wsserverInternal.deleteWebSocketHandler(handler))
 
 	// Wait for gin server to initialize and run in background
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, addr string) {
 		wg.Done()
-		wsserverInternal.ginEngine.Run(addr)
+		wsserverInternal.webServer.Run(addr)
 
 	}(wg, addr)
 	wg.Wait()

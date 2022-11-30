@@ -22,3 +22,5 @@
 - [x] Single Session Validation
 
 - [x] Detect Duplicate Sessions
+
+- [ ] Add the client information to session, client IP, true client IP(x-real-ip)

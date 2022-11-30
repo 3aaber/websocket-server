@@ -21,16 +21,16 @@ const (
 )
 
 type wsserver struct {
-	sync.RWMutex                             // Lock for internal map
-	internalWSMap map[string]*websocket.Conn // internal map : session id -> web socket instance
-	wsmapTTL      *sortedmap.SortedMap       // sorted Map to save TTL data
-	ginEngine     *gin.Engine                // gin engine
-	upgrader      websocket.Upgrader         // websocket upgrader
+	sync.RWMutex                               // Lock for internal map
+	internalWSMap   map[string]*websocket.Conn // internal map : session id -> web socket instance
+	webSocketMapTTL *sortedmap.SortedMap       // sorted Map to save TTL data
+	webServer       *gin.Engine                // gin engine
+	upgrader        websocket.Upgrader         // websocket upgrader
 }
 
 var wsserverInternal *wsserver
 
-func (w *wsserver) delwshandler(handler func(string) bool) gin.HandlerFunc {
+func (w *wsserver) deleteWebSocketHandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -51,7 +51,7 @@ func (w *wsserver) delwshandler(handler func(string) bool) gin.HandlerFunc {
 	return gin.HandlerFunc(fn)
 }
 
-func (w *wsserver) getwshandler(handler func(string) bool) gin.HandlerFunc {
+func (w *wsserver) getWebSocketHandler(handler func(string) bool) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 
 		sessionID := c.Param("id")
@@ -94,14 +94,14 @@ func (w *wsserver) len() int {
 func (w *wsserver) addClient(id string, ws *websocket.Conn) {
 	w.Lock()
 	defer w.Unlock()
-	w.wsmapTTL.Insert(id, time.Now().Add(ttlTime))
+	w.webSocketMapTTL.Insert(id, time.Now().Add(ttlTime))
 	w.internalWSMap[id] = ws
 }
 
 func (w *wsserver) deleteClient(id string) {
 	w.Lock()
 	defer w.Unlock()
-	w.wsmapTTL.Delete(id)
+	w.webSocketMapTTL.Delete(id)
 	delete(w.internalWSMap, id)
 }
 

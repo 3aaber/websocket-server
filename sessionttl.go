@@ -19,7 +19,7 @@ func (w *wsserver) checkTTLofRecords() {
 		wg.Done()
 		for range ticker.C {
 			upperBound := time.Now()
-			iterCh, err := w.wsmapTTL.BoundedIterCh(reversed, lowerBound, upperBound)
+			iterCh, err := w.webSocketMapTTL.BoundedIterCh(reversed, lowerBound, upperBound)
 			if err != nil {
 				continue
 			}
