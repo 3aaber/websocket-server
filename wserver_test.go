@@ -9,11 +9,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func handlera(id string) bool {
+	return true
+}
 func TestWebSocket(t *testing.T) {
-
+	initializeWebSocketServer(handlera, "localhost:8082")
 	u := url.URL{
 		Scheme: "ws",
-		Host:   "localhost:8080",
+		Host:   "localhost:8082",
 		Path:   "/ws/sessions/1234",
 	}
 	log.Printf("connecting to %s", u.String())
