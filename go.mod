@@ -1,4 +1,4 @@
-module websocket-server
+module github.com/sabermesgari/websocket-server
 
 go 1.19
 
